@@ -1,4 +1,5 @@
 from app.core.config import settings, news_api_calls, NewsApiCall
+from app.schemas.news_schema import Article
 import requests
 import time
 
@@ -33,6 +34,15 @@ def _gather_gnews_api_responses() -> list[dict]:
         time.sleep(_BREAK_BETWEEN_CALLS)
     return responses
 
-def get_curated_news() -> list[dict]:
+def get_curated_news() -> list[Article]:
     responses = _gather_gnews_api_responses()
-    return responses
+    
+    # Convert to the schema format
+    articles: list[Article] = []
+    for response in responses:
+        subarticles = response['articles']
+        try:
+            articles.extend([Article(**sub) for sub in subarticles])
+        except Exception as e:
+            print('Error processing news response into schema format.')
+    return articles
