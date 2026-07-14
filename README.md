@@ -28,9 +28,9 @@ dashboard/
                     news_api_calls: list[NewsApiCall]
 			components/
 				__init__.py
-				news-api.py
+				news_api.py
 					get_curated_news()
-				todo-api.py
+				todo_api.py
 					get_todo_today()
 					get_todo_shopping()
 			schemas/
