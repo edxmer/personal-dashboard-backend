@@ -1,48 +1,70 @@
 from app.core.config import settings, news_api_calls, NewsApiCall
 from app.schemas.news_schema import Article
-import requests
-import time
+from app.services.serialization import save_data, load_data
+from pydantic import ValidationError
+from pathlib import Path
+import httpx
+import asyncio
 
 _BREAK_BETWEEN_CALLS: float = 1.1
+_CACHE_LOCATION: Path = Path(__file__).resolve().parent.parent.parent / '_cache' / 'news.pkl'
 
-def _call_gnews_api(call: NewsApiCall) -> dict:
+async def _call_gnews_api(client: httpx.AsyncClient, call: NewsApiCall) -> dict:
     url = f'https://gnews.io/api/v4/{call.endpoint}'
     
     parameters = call.parameters.copy()
     parameters['max'] = call.max_count
     parameters['apikey'] = settings.gnews_api_key
     
+    print(f'Requesting {url} with parameters: {parameters}...')
+    
     try:
-        response = requests.get(url, params=parameters)
+        response = await client.get(url, params=parameters)
         response.raise_for_status()
         
+        print('Success!')
         return response.json()
-    except requests.exceptions.HTTPError as e:
-        print(f'HTTPError raised for GNews API\'s {call.endpoint} endpoint: {e.response.status_code if e.response is not None else '-'}')
+    except httpx.HTTPStatusError as e:
+        print(f'HTTPStatusError raised for GNews API\'s {call.endpoint} endpoint: {e.response.status_code if e.response is not None else '-'}')
     except Exception:
         print("Exception raised for GNews API")
     return {}
 
-def _gather_gnews_api_responses() -> list[dict]:
+async def _get_gnews_api_responses() -> list[dict]:
     responses = []
-    for call in news_api_calls:
-        response = _call_gnews_api(call)
-        if response:
-            responses.append(response)
-        # First, I tried making all of this async calls, but the gnews api didnt like that,
-        # so now I'm even putting breaks between calls, I hope it works this way
-        time.sleep(_BREAK_BETWEEN_CALLS)
+    async with httpx.AsyncClient() as client:
+        for call in news_api_calls:
+            response = await _call_gnews_api(client, call)
+            if response:
+                responses.append(response)
+            await asyncio.sleep(_BREAK_BETWEEN_CALLS)
     return responses
 
-def get_curated_news() -> list[Article]:
-    responses = _gather_gnews_api_responses()
+async def _get_gnews_api_schema_responses() -> list[Article]:
+    responses = await _get_gnews_api_responses()
     
     # Convert to the schema format
     articles: list[Article] = []
     for response in responses:
-        subarticles = response['articles']
-        try:
-            articles.extend([Article(**sub) for sub in subarticles])
-        except Exception as e:
-            print('Error processing news response into schema format.')
+        batch = response['articles']
+        for article in batch:
+            try:
+                articles.append(Article(**article))
+            except ValidationError as e:
+                print(f'Validation error on article: {e.error_count} errors found.')
     return articles
+
+async def fetch_and_cache_news():
+    news = await _get_gnews_api_schema_responses()
+    
+    _CACHE_LOCATION.parent.mkdir(parents=True, exist_ok=True)
+    
+    save_data(news, _CACHE_LOCATION)
+
+def get_news() -> list[Article]:
+    if not _CACHE_LOCATION.exists():
+        return []
+    
+    news: list[Article] = load_data(_CACHE_LOCATION)
+    
+    return news
