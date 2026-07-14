@@ -24,6 +24,8 @@ dashboard/
 			core/
 				__init__.py
 				config.py
+                    settings: Settings
+                    news_api_calls: list[NewsApiCall]
 			components/
 				__init__.py
 				news-api.py
@@ -35,6 +37,12 @@ dashboard/
 				__init__.py
 				news_schema.py
 				todo_schema.py
+            services/
+                __init__.py
+                serialization.py
+                    save_data(data, path)
+                    load_data(path)
+        _cached/ # It will save the articles and other stuff here
 		requirements.txt
 		.env # API keys & debug mode
 ```
