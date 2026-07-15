@@ -24,9 +24,11 @@ class NewsApiCall:
 settings = Settings() # type: ignore
 
 news_api_calls: list[NewsApiCall] = [
-    NewsApiCall('search', {'q': '"artificial intelligence" OR "PyTorch" OR "machine learning"', 'lang': 'en'}, 6),
-    NewsApiCall('top-headlines', {'category': 'general', 'lang': 'en'}, 3),
-    NewsApiCall('top-headlines', {'category': 'general', 'country': 'hu'}, 2),
-    NewsApiCall('search', {'q':'"microcontroller" OR "PCB" OR "3D printing"', 'lang': 'en'}, 2),
-    NewsApiCall('search', {'q': '"healthcare IT" OR "medical AI"', 'lang': 'en'}, 2),
+    NewsApiCall('top-headlines', {'category': 'world', 'lang': 'en'}, 3, 'WORLD'),
+    NewsApiCall('top-headlines', {'category': 'nation', 'country': 'hu'}, 2, 'HUNGARY'),
+    NewsApiCall('search', {'q': '"artificial intelligence" OR "machine learning"', 'lang': 'en'}, 3, 'AI'),
+    NewsApiCall('search', {'q': '"healthcare ai" OR "medical ai"', 'lang': 'en'}, 2, 'MED AI'),
+    NewsApiCall('top-headlines', {'category': 'technology' ,'lang': 'en'}, 2, 'TECH'),
+    NewsApiCall('top-headlines', {'category': 'science' ,'lang': 'en'}, 2, 'SCIENCE'),
+    NewsApiCall('top-headlines', {'category': 'health' ,'lang': 'en'}, 2, 'HEALTH'),
 ]
