@@ -17,6 +17,7 @@ class NewsApiCall:
     endpoint: str
     parameters: dict
     max_count: int
+    category: str
 
 # Setting variables that should be used from outside
 

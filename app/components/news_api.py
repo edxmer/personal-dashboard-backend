@@ -36,6 +36,7 @@ async def _get_gnews_api_responses() -> list[dict]:
         for call in news_api_calls:
             response = await _call_gnews_api(client, call)
             if response:
+                response['category'] = call.category
                 responses.append(response)
             await asyncio.sleep(_BREAK_BETWEEN_CALLS)
     return responses
@@ -47,9 +48,10 @@ async def _get_gnews_api_schema_responses() -> list[Article]:
     articles: list[Article] = []
     for response in responses:
         batch = response['articles']
+        category = response['category']
         for article in batch:
             try:
-                articles.append(Article(**article))
+                articles.append(Article(**article, category=category))
             except ValidationError as e:
                 print(f'Validation error on article: {e.error_count} errors found.')
     return articles
