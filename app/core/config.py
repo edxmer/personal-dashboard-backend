@@ -7,6 +7,8 @@ ENV_PATH = Path(__file__).resolve().parent.parent.parent / '.env'
 class Settings(BaseSettings):
     debug: bool = False
     
+    api_key: str
+    
     gnews_api_key: str
     dropbox_api_key: str
     
