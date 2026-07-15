@@ -4,12 +4,15 @@ I am making this because I want a simple way to check out the most relevant news
 
 ## Quick start
 
-TODO: write this when I finish the project
+1. Clone the repo
+2. Create a python (minimum version 3.14) venv: `python -m venv .venv`
+3. Activate the venv
+3. Install dependencies: `python -m pip -r requirements.txt`
+4. Start the project: `python -m app.main`
 
 ## Current components
 
 1. News, from GNews API
-2. todo (today's todo and shopping list), from SuperProductivity, using the Dropbox sync
 
 
 ## File structure
@@ -30,7 +33,7 @@ dashboard/
 				__init__.py
 				news_api.py
 					get_curated_news()
-				todo_api.py
+				todo_api.py # uncomplete
 					get_todo_today()
 					get_todo_shopping()
 			schemas/
