@@ -13,4 +13,4 @@ class Article(BaseModel):
     publishedAt: datetime
     lang: str
     source: NewsSource
-
+    category: str
