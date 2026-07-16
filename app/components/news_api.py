@@ -1,4 +1,4 @@
-from app.core.config import settings, news_api_calls, NewsApiCall
+from app.core.config import settings, news_api_calls, NewsApiCall, CACHE_FOLDER_PATH
 from app.schemas.news_schema import Article
 from app.services.serialization import save_data, load_data
 from pydantic import ValidationError
@@ -7,7 +7,9 @@ import httpx
 import asyncio
 
 _BREAK_BETWEEN_CALLS: float = 1.1
-_CACHE_LOCATION: Path = Path(__file__).resolve().parent.parent.parent / '_cache' / 'news.pkl'
+
+_SAVE_LOCATION: Path = CACHE_FOLDER_PATH / 'news.pkl'
+_METADATA_LOCATION: Path = CACHE_FOLDER_PATH / 'news.metadata.pkl'
 
 async def _call_gnews_api(client: httpx.AsyncClient, call: NewsApiCall) -> dict:
     url = f'https://gnews.io/api/v4/{call.endpoint}'

@@ -2,7 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 from dataclasses import dataclass
 
-ENV_PATH = Path(__file__).resolve().parent.parent.parent / '.env'
+ENV_PATH: Path = Path(__file__).resolve().parent.parent.parent / '.env'
+CACHE_FOLDER_PATH: Path = Path(__file__).resolve().parent.parent.parent / '_cache'
 
 class Settings(BaseSettings):
     debug: bool = False
