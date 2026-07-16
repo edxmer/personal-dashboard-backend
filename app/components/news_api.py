@@ -3,6 +3,7 @@ from app.schemas.news_schema import Article
 from app.services.serialization import save_data, load_data
 from pydantic import ValidationError
 from pathlib import Path
+from datetime import datetime, timedelta
 import httpx
 import asyncio
 
@@ -60,15 +61,39 @@ async def _get_gnews_api_schema_responses() -> list[Article]:
 
 async def fetch_and_cache_news():
     news = await _get_gnews_api_schema_responses()
+    date = datetime.now()
+    metadata = {'date': date}
     
-    _CACHE_LOCATION.parent.mkdir(parents=True, exist_ok=True)
+    _SAVE_LOCATION.parent.mkdir(parents=True, exist_ok=True)
     
-    save_data(news, _CACHE_LOCATION)
+    save_data(news, _SAVE_LOCATION)
+    save_data(metadata, _METADATA_LOCATION)
 
 def get_news() -> list[Article]:
-    if not _CACHE_LOCATION.exists():
+    if not _SAVE_LOCATION.exists():
         return []
     
-    news: list[Article] = load_data(_CACHE_LOCATION)
+    news: list[Article] = load_data(_SAVE_LOCATION)
     
     return news
+
+def get_metadata() -> dict:
+    if not _METADATA_LOCATION.exists():
+        return {}
+    
+    metadata = load_data(_METADATA_LOCATION)
+    return metadata
+
+def should_recache() -> bool:
+    if not _SAVE_LOCATION.exists() or not _METADATA_LOCATION.exists():
+        return True
+    
+    metadata = get_metadata()
+    
+    last_cache_date: datetime = metadata['date']
+    elapsed_time: timedelta = datetime.now() - last_cache_date
+    
+    elapsed_hours = elapsed_time.total_seconds() / (60.0 * 60.0)
+    
+    return elapsed_hours >= 12
+    
