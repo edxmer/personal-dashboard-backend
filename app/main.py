@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.core.config import settings
-from app.components.news_api import fetch_and_cache_news, get_news
+from app.components.news_api import fetch_and_cache_news, get_news, should_recache
 from app.schemas.news_schema import Article
 
 # API Lifespan
@@ -17,8 +17,7 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(fetch_and_cache_news, 'cron', hour='6,20')
     scheduler.start()
     
-    from app.components.news_api import _CACHE_LOCATION
-    if not _CACHE_LOCATION.exists():
+    if should_recache():
         asyncio.create_task(fetch_and_cache_news())
     
     yield
