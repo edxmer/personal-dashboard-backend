@@ -12,7 +12,7 @@ from app.core.config import settings
 from app.schemas.news_schema import Article
 from app.schemas.superprod_schema import Task
 
-# * Create API lifespan *
+#   * Create API lifespan *
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
-# * API key validation*
+#   * API key validation*
 
 api_key_header = APIKeyHeader(name='API_KEY', auto_error=False)
 
@@ -50,22 +50,45 @@ async def validate_api_key(api_key: str = Security(api_key_header)):
     return api_key
 
 
-# * Create the API instance *
+#   * Create the API instance *
 
 app = FastAPI(lifespan=lifespan, dependencies=[Depends(validate_api_key)])
 
 
-# * API endpoints *
+#   * API endpoints *
 
 @app.get('/api/news', response_model=list[Article])
-def get_news():
+def get_news() -> list[Article]:
     return news_api.get_news()
 
 @app.get('/tasks/today', response_model=list[Task])
-def get_tasks_today():
+def get_tasks_today() -> list[Task]:
     return superprod_api.get_tasks_today()
 
-# * Start the server *
+@app.get('/tasks/shopping', response_model=list[Task])
+def get_tasks_shopping() -> list[Task]:
+    return superprod_api.get_tasks_from_project('YcSyZq8lcEfN6g1gYEW9S')
+
+@app.get('/projects/all', response_model=list[Task])
+def get_projects_all() -> list[Task]:
+    return superprod_api.get_tasks_from_project('JStjfN1GcrmOAaKYyS73R')
+
+@app.get('/projects/current', response_model=list[Task])
+def get_projects_current() -> list[Task]:
+    projects = get_projects_all()
+    return [project for project in projects if project.section is None]
+
+@app.get('/projects/on-hold', response_model=list[Task])
+def get_projects_on_hold() -> list[Task]:
+    projects = get_projects_all()
+    return [project for project in projects if project.section == 'On-hold']
+
+@app.get('/projects/not-started', response_model=list[Task])
+def get_projects_not_started() -> list[Task]:
+    projects = get_projects_all()
+    return [project for project in projects if project.section == 'Not started']
+
+#   * Start the server *
 
 if __name__ == '__main__':
     uvicorn.run('app.main:app', host='127.0.0.1', port=8000, reload=False)
