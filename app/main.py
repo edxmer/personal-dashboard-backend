@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.api.news_api import fetch_and_cache_news, get_news, should_recache
 from app.schemas.news_schema import Article
 
-# API Lifespan
+# * Create API lifespan *
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,7 +24,8 @@ async def lifespan(app: FastAPI):
     
     scheduler.shutdown()
 
-# API key validation
+
+# * API key validation*
 
 api_key_header = APIKeyHeader(name='API_KEY', auto_error=False)
 
@@ -36,17 +37,20 @@ async def validate_api_key(api_key: str = Security(api_key_header)):
         )
     return api_key
 
-# Create the API instance
+
+# * Create the API instance *
 
 app = FastAPI(lifespan=lifespan, dependencies=[Depends(validate_api_key)])
 
-# Expose endpoints
+
+# * API endpoints *
 
 @app.get('/api/news', response_model=list[Article])
 def read_news():
     return get_news()
 
-# Start the server
+
+# * Start the server *
 
 if __name__ == '__main__':
     uvicorn.run('app.main:app', host='127.0.0.1', port=8000, reload=False)
