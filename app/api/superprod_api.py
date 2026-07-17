@@ -221,6 +221,19 @@ async def fetch_and_cache():
     save_data(data, _SAVE_LOCATION)
     save_data(metadata, _METADATA_LOCATION)
 
+def should_recache() -> bool:
+    if not _SAVE_LOCATION.exists() or not _METADATA_LOCATION.exists():
+        return True
+    
+    metadata = _get_metadata()
+    
+    last_cache_date: datetime = metadata['date']
+    elapsed_time: timedelta = datetime.now() - last_cache_date
+    
+    elapsed_minutes = elapsed_time.total_seconds() / 60.0
+    
+    return elapsed_minutes >= _RECACHE_AFTER_MINUTES
+
 def get_tasks_today() -> list[Task]:
     if not _SAVE_LOCATION.exists():
         return []
@@ -236,16 +249,3 @@ def get_tasks_today() -> list[Task]:
             tasks.append(task)
     
     return tasks
-
-def should_recache() -> bool:
-    if not _SAVE_LOCATION.exists() or not _METADATA_LOCATION.exists():
-        return True
-    
-    metadata = _get_metadata()
-    
-    last_cache_date: datetime = metadata['date']
-    elapsed_time: timedelta = datetime.now() - last_cache_date
-    
-    elapsed_minutes = elapsed_time.total_seconds() / 60.0
-    
-    return elapsed_minutes >= _RECACHE_AFTER_MINUTES
