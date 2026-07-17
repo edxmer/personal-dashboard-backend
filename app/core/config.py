@@ -11,7 +11,11 @@ class Settings(BaseSettings):
     api_key: str
     
     gnews_api_key: str
-    dropbox_api_key: str
+    
+    # this has to be used instead of a refresh token because they always expire in 4 hours
+    dropbox_refresh_token: str
+    dropbox_app_key: str
+    dropbox_app_secret: str
     
     model_config = SettingsConfigDict(env_file=ENV_PATH, env_file_encoding='utf-8', extra='ignore')
 
