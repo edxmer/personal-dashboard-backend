@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import httpx
 import asyncio
 
+_RECACHE_AFTER_MINUTES: float = 12.0 * 60.0
+
 _BREAK_BETWEEN_CALLS: float = 1.1
 
 _SAVE_LOCATION: Path = CACHE_FOLDER_PATH / 'news.pkl'
@@ -93,7 +95,7 @@ def should_recache() -> bool:
     last_cache_date: datetime = metadata['date']
     elapsed_time: timedelta = datetime.now() - last_cache_date
     
-    elapsed_hours = elapsed_time.total_seconds() / (60.0 * 60.0)
+    elapsed_minutes = elapsed_time.total_seconds() / 60.0
     
-    return elapsed_hours >= 12
+    return elapsed_minutes >= _RECACHE_AFTER_MINUTES
     
