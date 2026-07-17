@@ -12,14 +12,14 @@ from app.core.config import settings, CACHE_FOLDER_PATH
 from app.schemas.superprod_schema import _Task, _Project, _Section, _Tag, _SuperProcuctivityData, Task
 from app.services.serialization import save_data, load_data
 
-_RECACHE_AFTER_MINUTES: float = 12.0
+_RECACHE_AFTER_MINUTES: float = 0.5
 
 _DBX_DATA_FILE_PATH: str = '/Apps/super_productivity/sync-data.json'
 
 _SAVE_LOCATION: Path = CACHE_FOLDER_PATH / 'tasks.pkl'
 _METADATA_LOCATION: Path = CACHE_FOLDER_PATH / 'tasks.metadata.pkl'
 
-async def _request_raw_task_data() -> str:
+async def _request_raw_data() -> str:
     dbx = dropbox.Dropbox(
         app_key=settings.dropbox_app_key,
         app_secret=settings.dropbox_app_secret,
@@ -42,8 +42,8 @@ async def _request_raw_task_data() -> str:
     
     return ""
 
-async def _get_raw_task_data_dict() -> dict:
-    raw_str_data = await _request_raw_task_data()
+async def _get_raw_data_dict() -> dict:
+    raw_str_data = await _request_raw_data()
     
     # clip the starting 'pf_2__' characters
     
@@ -53,8 +53,8 @@ async def _get_raw_task_data_dict() -> dict:
     
     return data
 
-async def _get_parsed_task_data() -> _SuperProcuctivityData:
-    data: dict = await _get_raw_task_data_dict()
+async def _get_parsed_data() -> _SuperProcuctivityData:
+    data: dict = await _get_raw_data_dict()
     
     #   * TASKS *
     
@@ -124,6 +124,7 @@ async def _get_parsed_task_data() -> _SuperProcuctivityData:
                 entity['dueDay'], 
                 '%Y-%m-%d'
             ) if 'dueDay' in entity else None,
+            subtask_ids=entity['subTaskIds'],
             project_id=entity['projectId'],
             tag_ids=entity['tagIds']
         )
@@ -186,8 +187,18 @@ def _extract_task_data(task_id: str, data: _SuperProcuctivityData) -> Task | Non
     is_done: bool = task_data.is_done
     due_day: datetime | None = task_data.due_day
     
+    subtasks: list[str] = [
+        data.tasks[id].title
+        for id 
+        in task_data.subtask_ids
+    ]
+    
     project: str = data.projects[task_data.project_id].title
-    tags: list[str] = [data.tags[id].title for id in task_data.tag_ids]
+    tags: list[str] = [
+        data.tags[id].title 
+        for id
+        in task_data.tag_ids
+    ]
     
     section = None
     for section_data in data.sections.values():
@@ -198,6 +209,7 @@ def _extract_task_data(task_id: str, data: _SuperProcuctivityData) -> Task | Non
         title=title,
         is_done=is_done,
         due_day=due_day,
+        subtasks=subtasks,
         project=project,
         tags=tags,
         section=section
@@ -210,9 +222,18 @@ def _get_metadata() -> dict:
     metadata = load_data(_METADATA_LOCATION)
     return metadata
 
+def _get_tasks_from_ids(task_ids: list[str], data: _SuperProcuctivityData) -> list[Task]:
+    tasks = []
+    for id in task_ids:
+        task = _extract_task_data(id, data)
+        if task is not None:
+            tasks.append(task)
+    
+    return tasks
+
 async def fetch_and_cache():
     print('INFO:\tFetching and caching superprod data...')
-    data = await _get_parsed_task_data()
+    data = await _get_parsed_data()
     date = datetime.now()
     metadata = {'date': date}
     
@@ -230,9 +251,10 @@ def should_recache() -> bool:
     last_cache_date: datetime = metadata['date']
     elapsed_time: timedelta = datetime.now() - last_cache_date
     
-    elapsed_minutes = elapsed_time.total_seconds() / 60.0
+    elapsed_minutes = elapsed_time.total_seconds()
     
     return elapsed_minutes >= _RECACHE_AFTER_MINUTES
+    
 
 def get_tasks_today() -> list[Task]:
     if not _SAVE_LOCATION.exists():
@@ -242,10 +264,24 @@ def get_tasks_today() -> list[Task]:
     
     today_ids: list[str] = data.tags['TODAY'].task_ids
     
-    tasks = []
-    for id in today_ids:
-        task = _extract_task_data(id, data)
-        if task is not None:
-            tasks.append(task)
+    tasks = _get_tasks_from_ids(today_ids, data)
     
     return tasks
+
+def get_tasks_from_project(project_id: str) -> list[Task]:
+    if not _SAVE_LOCATION.exists():
+        return []
+    
+    data: _SuperProcuctivityData = load_data(_SAVE_LOCATION)
+    
+    task_ids: list[str] = data.projects[project_id].task_ids
+    
+    tasks = _get_tasks_from_ids(task_ids, data)
+    
+    return tasks
+
+if __name__ == '__main__':
+    if settings.debug:
+        data: _SuperProcuctivityData = load_data(_SAVE_LOCATION)
+        #print(data.model_dump_json())
+        print(json.dumps(asyncio.run(_get_raw_data_dict()), indent=4))

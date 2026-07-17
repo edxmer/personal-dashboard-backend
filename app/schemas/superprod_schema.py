@@ -8,6 +8,8 @@ class _Task(BaseModel):
     is_done: bool
     due_day: datetime | None = None
     
+    subtask_ids: list[str]
+    
     project_id: str
     tag_ids: list[str]
 
@@ -40,6 +42,9 @@ class Task(BaseModel):
     title: str
     is_done: bool
     due_day: datetime | None = None
+    subtasks: list[str] # only the name will be stored since I 
+                        # do not want an accidental infinite loop
+                        # during parsing
     
     project: str
     tags: list[str]
