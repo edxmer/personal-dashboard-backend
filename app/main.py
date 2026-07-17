@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.core.config import settings
-from app.components.news_api import fetch_and_cache_news, get_news, should_recache
+from app.api.news_api import fetch_and_cache_news, get_news, should_recache
 from app.schemas.news_schema import Article
 
 # API Lifespan
