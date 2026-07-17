@@ -59,6 +59,13 @@ async def _get_gnews_api_schema_responses() -> list[Article]:
                 print(f'Validation error on article: {e.error_count} errors found.')
     return articles
 
+def _get_metadata() -> dict:
+    if not _METADATA_LOCATION.exists():
+        return {}
+    
+    metadata = load_data(_METADATA_LOCATION)
+    return metadata
+
 async def fetch_and_cache_news():
     news = await _get_gnews_api_schema_responses()
     date = datetime.now()
@@ -77,18 +84,11 @@ def get_news() -> list[Article]:
     
     return news
 
-def get_metadata() -> dict:
-    if not _METADATA_LOCATION.exists():
-        return {}
-    
-    metadata = load_data(_METADATA_LOCATION)
-    return metadata
-
 def should_recache() -> bool:
     if not _SAVE_LOCATION.exists() or not _METADATA_LOCATION.exists():
         return True
     
-    metadata = get_metadata()
+    metadata = _get_metadata()
     
     last_cache_date: datetime = metadata['date']
     elapsed_time: timedelta = datetime.now() - last_cache_date
