@@ -68,7 +68,8 @@ def _get_metadata() -> dict:
     metadata = load_data(_METADATA_LOCATION)
     return metadata
 
-async def fetch_and_cache_news():
+async def fetch_and_cache():
+    print('INFO:\tFetching and caching news...')
     news = await _get_gnews_api_schema_responses()
     date = datetime.now()
     metadata = {'date': date}
